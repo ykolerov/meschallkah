@@ -1,0 +1,5 @@
+# Fast simulation and initial low-speed testing only; NOT acceptance evidence
+rpm,wait_s,record_s
+60,1,1
+120,1,1
+60,1,1
