@@ -1,0 +1,17 @@
+# Python and Windows
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+Thumbs.db
+.DS_Store
+
+# Experiment outputs (never automatically commit raw data)
+D1_log_*.csv
+steps.csv
+*.mp4
+*.avi
+*.mov
