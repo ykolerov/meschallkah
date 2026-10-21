@@ -14,7 +14,7 @@ video = ["numpy>=1.24", "opencv-python>=4.8"]
 dev = ["pytest>=8", "numpy>=1.24"]
 
 [tool.setuptools]
-py-modules = ["tmc2209_uart", "sweep", "disc_rate"]
+py-modules = ["tmc2209_uart", "port_discovery", "sweep", "disc_rate"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
