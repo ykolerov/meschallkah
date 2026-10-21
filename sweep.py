@@ -14,10 +14,11 @@ import time
 from pathlib import Path
 
 from tmc2209_uart import DriveError, SimPort, TMC2209
+from port_discovery import resolve_port
 
 
 def drive_options(parser):
-    parser.add_argument("--port", help="USB-UART port, e.g. COM5 or /dev/ttyUSB0")
+    parser.add_argument("--port", help="optional override; default auto-detect CP210x and verify TMC2209")
     parser.add_argument("--baud", type=int, default=115200)
     parser.add_argument("--dry-run", action="store_true", help="simulate register I/O, no motor")
     parser.add_argument("--fclk", type=float, default=12e6, help="effective calibrated TMC clock in Hz")
@@ -37,10 +38,11 @@ def drive_options(parser):
 
 
 def open_drive(args):
-    if not args.dry_run and not args.port:
-        raise ValueError("--port required unless --dry-run")
+    port = args.port
+    if not args.dry_run and not port:
+        port = resolve_port(baud=args.baud)
     driver = TMC2209(
-        port=args.port, ser=SimPort() if args.dry_run else None,
+        port=port, ser=SimPort() if args.dry_run else None,
         baud=args.baud, fclk=args.fclk, rsense=args.rsense,
         max_rpm=args.max_rpm, marker=args.marker)
     sleep = (lambda seconds: time.sleep(seconds * 0.001)) if args.dry_run else time.sleep
