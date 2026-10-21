@@ -17,6 +17,15 @@ See [parts and mechanics](docs/HARDWARE.md) and [pin-to-pin wiring](docs/WIRING.
 
 ## Windows quick start (no hardware)
 
+If you prefer one-command Windows setup, run:
+
+~~~powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\simulate.ps1
+~~~
+
+These scripts do **not** touch physical COM ports or energize the drive.
+
 Requires Python **3.10 or newer**.
 
 ~~~powershell
@@ -56,7 +65,7 @@ For LED synchronization select **--marker rts** or **--marker dtr** only after w
 ## Limits and safety
 
 - TMC2209 VACTUAL is **open-loop**. Motor step loss or stir-bar decoupling is not reliably detected by the driver. Measure actual stir-bar speed from the S1 video.
-- **Loss of USB/PC control may leave the motor turning.** Keep the physical EN/off switch accessible; turn it OFF to stop. Python exception handling is not an emergency stop.
+- **Loss of USB/PC control may leave the motor turning. **Do not run unattended before an independent hardware failsafe has been implemented and verified.**** Keep the physical EN/off switch accessible; turn it OFF to stop. Python exception handling is not an emergency stop.
 - 2000–2500 rpm torque, temperature, vibration, 6–8 mm coupling gap are all **unverified**. Pass T1–T9 before scientific measurements.
 - Mechanically **retain and enclose** the spinning magnets. Do not rely only on glue for containment.
 - The video helper only measures periodic rotation; it does **not** reconstruct the vortex surface.
