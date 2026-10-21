@@ -42,13 +42,25 @@ py -3 -m venv .venv
 To connect **only after** [commissioning](docs/COMMISSIONING.md):
 
 ~~~powershell
-.\.venv\Scripts\python.exe -m serial.tools.list_ports
+# The drive is wired and powered, with hardware EN=OFF.
+.\.venv\Scripts\python.exe sweep.py check
+
+# Only after the wiring check, guard and motor tests: EN=RUN.
+.\.venv\Scripts\python.exe sweep.py check --rpm 120 --seconds 60
+.\.venv\Scripts\python.exe sweep.py run --table steps.csv --fclk 12000000
+~~~
+
+**Automatic COM-port discovery is now the default** for `check` and `run`. It searches CP210x USB–UART adapters (including CP2102, typically VID:PID `10C4:EA60`), then verifies that a TMC2209 responds with chip version `0x21` using a **read-only** UART request. If one passes, it is selected automatically. If multiple pass, choose from the numbered menu; noninteractive runs must specify a port. If none pass, the program stops with a wiring/24 V troubleshooting message. Probe needs **both 3.3 V logic and 24 V VM** to be connected; it does not energize the motor or change TMC registers.
+
+To override auto-detection or use another type of USB–UART adapter:
+
+~~~powershell
+.\.venv\Scripts\python.exe -m serial.tools.list_ports -v
 .\.venv\Scripts\python.exe sweep.py check --port COM5
-.\.venv\Scripts\python.exe sweep.py check --port COM5 --rpm 120 --seconds 60
 .\.venv\Scripts\python.exe sweep.py run --port COM5 --table steps.csv --fclk 12000000
 ~~~
 
-Replace COM5 with your port. The 12 MHz clock is **nominal**; calibrate with fit-clock before data collection.
+The 12 MHz clock is **nominal**; calibrate with fit-clock before data collection. `--dry-run` never scans or opens physical ports.
 
 ## Operations
 
@@ -65,7 +77,7 @@ For LED synchronization select **--marker rts** or **--marker dtr** only after w
 ## Limits and safety
 
 - TMC2209 VACTUAL is **open-loop**. Motor step loss or stir-bar decoupling is not reliably detected by the driver. Measure actual stir-bar speed from the S1 video.
-- **Loss of USB/PC control may leave the motor turning. **Do not run unattended before an independent hardware failsafe has been implemented and verified.**** Keep the physical EN/off switch accessible; turn it OFF to stop. Python exception handling is not an emergency stop.
+- **Loss of USB/PC control may leave the motor turning.** Do not run unattended before an independent hardware failsafe has been implemented and verified. Keep the physical EN/off switch accessible; turn it OFF to stop. Python exception handling is not an emergency stop.
 - 2000–2500 rpm torque, temperature, vibration, 6–8 mm coupling gap are all **unverified**. Pass T1–T9 before scientific measurements.
 - Mechanically **retain and enclose** the spinning magnets. Do not rely only on glue for containment.
 - The video helper only measures periodic rotation; it does **not** reconstruct the vortex surface.
