@@ -211,7 +211,7 @@ def cmd_run(args):
         raise
     finally:
         try:
-            safe_shutdown(driver, sleep, args.accel)
+            safe_shutdown(driver, sleep, args.accel, args.marker_invert)
         finally:
             if logger is not None:
                 logger.close()
