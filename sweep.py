@@ -75,14 +75,14 @@ def cmd_check(args):
             print("status at commanded rpm:", critical_check(driver))
         print("check completed; rpm shown is a setpoint, not a tachometer reading")
     finally:
-        safe_shutdown(driver, sleep, args.accel)
+        safe_shutdown(driver, sleep, args.accel, args.marker_invert)
 
 
-def safe_shutdown(driver, sleep, accel=100):
+def safe_shutdown(driver, sleep, accel=100, marker_off=False):
     """Attempt software stop; **cannot** protect against USB/PC connection loss."""
     try:
         try:
-            driver.marker(False)
+            driver.marker(marker_off)
         finally:
             driver.stop(sleep=sleep, accel=max(200.0, accel))
             driver.enable(False)
@@ -180,6 +180,7 @@ def cmd_run(args):
             "table=%s fclk_Hz=%s accel_rpm_s=%s" % (args.table, args.fclk, args.accel),
             "configuration=%s marker=%s" % (cfg, args.marker),
             "rpm_commanded is NOT observed speed; measure stir bar by video"])
+        driver.marker(bool(args.marker_invert))  # idle marker state, including inverted wiring
         print("Log:", filename, ";", len(table), "steps")
         logger.log(-1, "start", driver, critical_check(driver))
         if args.mode == "stealth" and not args.no_tune:
