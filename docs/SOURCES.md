@@ -35,3 +35,11 @@
 - В документации усилены требования к механическому удержанию вращающихся магнитов.
 
 Не внесено в конструкцию: BLDC, PID, энкодер, ESP32, новая камера, закрытый контур скорости. Они могут быть рассмотрены **только отдельной модификацией ТЗ**.
+
+## Field revisions (22 October 2026)
+
+The original PDF specifies CP2102 and 17HS4401. The assembled and tested prototype now uses FT232 and StepperOnline 17HE15-1504S. The wiring and README documents distinguish the original reference design from the current equipment and from unverified planned additions. An LM2596S-ADJ module, momentary EN pushbutton with 10 kΩ pullup, and FT232 RTS LED with a 100 Ω resistor are present in the reported assembly, but the newly soldered system is **not independently inspected**.
+
+Earlier observations: physical TMC2209 version 0x21 over COM4, real motor rotation, tachometer 201.3 / 503 / 1005–1006 rpm for respective nominal 200 / 500 / 1000 rpm settings. These are user-reported bench measurements, **not manufacturer specifications or formal calibration**.
+
+The driver remains open-loop. The optional `--no-tune` diagnostic option skips the StealthChop tune, which is not a replacement for validated startup and dynamic tuning. Electrical protection (LM2596, capacitor, USB isolation, RTS LED), mechanical safety, and camera synchronization require dedicated hardware testing.
