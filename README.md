@@ -9,9 +9,9 @@ Python control and build instructions for the **D1 drive** of IYPT 2027 Problem 
 ## Components
 
 - NEMA17 **17HS4401**, 1.8°/step; **BIGTREETECH TMC2209 v1.3**; 24 V ≥ 2 A enclosed DC power supply.
-- USB–TTL **Silicon Labs CP2102** (existing red five-pin board: 3V3, TXD, RXD, GND, +5V). **Never connect +5V to VIO.**
+- USB–TTL **FTDI FT232 USB–UART adapter** (current hardware, use 3.3 V logic and verify VCC with a meter). The earlier CP2102 remains supported. **Never connect +5 V to VIO.**
 - Two NdFeB magnets 20 × 10 × 5 mm, PETG disc, acrylic platform, physical EN/off switch, 100 µF 35 V capacitor, 1 kΩ TX resistor.
-- Optional sync LED + 330 Ω and RTS/DTR brought out. The existing five-pin CP2102 has neither exposed. Default is **no sync LED**, no chip soldering required.
+- Optional sync LED + 330 Ω via FT232 RTS, if wired and verified. Default remains **no sync LED**.
 
 See [parts and mechanics](docs/HARDWARE.md) and [pin-to-pin wiring](docs/WIRING.md) before connecting power.
 
@@ -50,9 +50,9 @@ To connect **only after** [commissioning](docs/COMMISSIONING.md):
 .\.venv\Scripts\python.exe sweep.py run --table steps.csv --fclk 12000000
 ~~~
 
-**Automatic COM-port discovery is now the default** for `check` and `run`. It searches CP210x USB–UART adapters (including CP2102, typically VID:PID `10C4:EA60`), then verifies that a TMC2209 responds with chip version `0x21` using a **read-only** UART request. If one passes, it is selected automatically. If multiple pass, choose from the numbered menu; noninteractive runs must specify a port. If none pass, the program stops with a wiring/24 V troubleshooting message. Probe needs **both 3.3 V logic and 24 V VM** to be connected; it does not energize the motor or change TMC registers.
+**Automatic COM-port discovery is now the default** for `check` and `run`. It searches **FTDI FT232** USB–UART adapters (typically VID:PID `0403:6001`) and CP210x adapters (typically `10C4:EA60`), then verifies that a TMC2209 responds with chip version `0x21` using a **read-only** UART request. If one passes, it is selected automatically. If multiple pass, choose from the numbered menu; noninteractive runs must specify a port. If none pass, the program stops with a wiring/24 V troubleshooting message. Probe needs **both 3.3 V logic and 24 V VM** to be connected; it does not energize the motor or change TMC registers.
 
-To override auto-detection or use another type of USB–UART adapter:
+To override auto-detection or use a different USB–UART adapter:
 
 ~~~powershell
 .\.venv\Scripts\python.exe -m serial.tools.list_ports -v
