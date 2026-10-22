@@ -23,8 +23,8 @@ def test_matching_by_usb_ids_or_cp210x_name_not_generic_usb_serial():
     assert ports.is_cp210x(cp("COM5"))
     assert ports.is_cp210x(fake_port("COM2", description="CP2102 Bridge"))
     assert not ports.is_cp210x(fake_port("COM1", description="USB Serial"))
-    assert not ports.is_cp210x(fake_port("COM6", vid=0x0403, pid=0x6001,
-                                       description="FTDI USB Serial"))
+    assert ports.is_ftdi(fake_port("COM6", vid=0x0403, pid=0x6001,
+                                   description="FTDI USB Serial"))
 
 
 def test_single_verified_adapter_auto_selected_only_correct_port_is_probed():
@@ -41,7 +41,7 @@ def test_single_verified_adapter_auto_selected_only_correct_port_is_probed():
 
 def test_no_usb_adapter_does_not_probe_any_port():
     used = []
-    with pytest.raises(ValueError, match="No CP210x"):
+    with pytest.raises(ValueError, match="No FT232/CP210x"):
         ports.resolve_port(comports=[fake_port("COM2")],
                            probe=lambda p: used.append(p))
     assert used == []
@@ -139,3 +139,23 @@ def test_dry_run_never_scans_real_usb_ports(monkeypatch):
     monkeypatch.setattr(sweep, "resolve_port",
                         lambda **kwargs: (_ for _ in ()).throw(AssertionError("scanned real ports")))
     assert sweep.main(["check", "--dry-run"]) == 0
+
+
+def test_ft232_auto_detects_and_checks_version():
+    messages = []
+    devices = [fake_port("COM4", vid=0x0403, pid=0x6001, description="USB Serial Port"),
+               fake_port("COM9", vid=0x10C4, pid=0xEA60, description="CP2102")]
+    port = ports.resolve_port(comports=devices,
+                              probe=lambda p: p == "COM4",
+                              output_fn=messages.append)
+    assert port == "COM4"
+    assert "0x21" in messages[-1]
+
+
+def test_unrelated_serial_device_not_probed():
+    found = []
+    devices = [fake_port("COM2", vid=0x1A86, pid=0x7523, description="CH340"),
+               fake_port("COM5", vid=0x0403, pid=0x6001, description="USB Serial Port")]
+    assert ports.resolve_port(comports=devices,
+                              probe=lambda p: found.append(p) or True) == "COM5"
+    assert found == ["COM5"]
