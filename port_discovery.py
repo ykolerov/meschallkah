@@ -1,6 +1,6 @@
 """Conservative USB-UART port discovery for the D1 TMC2209.
 
-Only probe likely CP210x interfaces; prove the connected chip is a TMC2209 by
+Only probe likely CP210x or FTDI FT232 interfaces; prove the connected chip is a TMC2209 by
 reading IOIN.VERSION == 0x21. Detection never configures the driver, writes a
 register, or requests motor movement. An explicit --port bypasses detection.
 """
@@ -13,6 +13,16 @@ from serial.tools import list_ports
 from tmc2209_uart import TMC2209
 
 
+def is_ftdi(info) -> bool:
+    """Match FT232-type FTDI USB serial interfaces (standard FTDI VID)."""
+    if getattr(info, "vid", None) == 0x0403 and getattr(info, "pid", None) in (0x6001, 0x6015):
+        return True
+    fields = ("description", "manufacturer", "product")
+    return any("ft232" in str(getattr(info, field, "") or "").lower()
+               or "ftdi" in str(getattr(info, field, "") or "").lower()
+               for field in fields)
+
+
 def is_cp210x(info) -> bool:
     """Identify the existing CP2102 or another explicitly identified CP210x."""
     if getattr(info, "vid", None) == 0x10C4 and getattr(info, "pid", None) == 0xEA60:
@@ -23,10 +33,10 @@ def is_cp210x(info) -> bool:
 
 
 def candidate_ports(comports=None):
-    """USB serial interfaces likely to be CP210x; sorted by port name."""
+    """USB serial interfaces likely to be CP210x or FT232; sorted by port name."""
     if comports is None:
         comports = list_ports.comports()
-    return sorted((port for port in comports if is_cp210x(port)),
+    return sorted((port for port in comports if is_cp210x(port) or is_ftdi(port)),
                   key=lambda p: p.device)
 
 
@@ -51,8 +61,8 @@ def resolve_port(*, baud: int = 115200, comports=None, probe=None,
     candidates = candidate_ports(comports)
     if not candidates:
         raise ValueError(
-            "No CP210x USB-UART adapter found. Connect your CP2102 and install "
-            "the Silicon Labs VCP driver if needed. Inspect ports with "
+            "No FT232/CP210x USB-UART adapter found. Connect your adapter and install "
+            "the matching FTDI or Silicon Labs VCP driver if needed. Inspect ports with "
             "'python -m serial.tools.list_ports -v'; for other adapters use --port COMx."
         )
 
@@ -68,7 +78,7 @@ def resolve_port(*, baud: int = 115200, comports=None, probe=None,
 
     if not good:
         raise ValueError(
-            "CP210x found but no connected TMC2209 responded with version 0x21. "
+            "FT232/CP210x found but no connected TMC2209 responded with version 0x21. "
             "Check 24 V VM, 3.3 V VIO, TX/RX/PDN_UART wiring and the hardware "
             "EN switch. Details: " + "; ".join(problems) +
             ". Use --port COMx to specify a port manually."
@@ -77,12 +87,12 @@ def resolve_port(*, baud: int = 115200, comports=None, probe=None,
     if len(good) == 1:
         chosen = good[0]
         output_fn("Auto-detected %s (%s); TMC2209 verified (0x21)." %
-                  (chosen.device, chosen.description or "CP210x"))
+                  (chosen.device, chosen.description or "USB-UART"))
         return chosen.device
 
-    output_fn("Multiple CP210x adapters with verified TMC2209 detected:")
+    output_fn("Multiple USB-UART adapters with verified TMC2209 detected:")
     for index, info in enumerate(good, start=1):
-        output_fn("  %d. %s — %s" % (index, info.device, info.description or "CP210x"))
+        output_fn("  %d. %s — %s" % (index, info.device, info.description or "USB-UART"))
 
     if interactive is None:
         interactive = sys.stdin.isatty() and sys.stdout.isatty()
