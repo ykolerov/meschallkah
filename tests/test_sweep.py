@@ -48,3 +48,16 @@ def test_external_speed_table_bound(tmp_path):
     steps = tmp_path / "unsafe.csv"
     steps.write_text("rpm,wait_s,record_s\n4000,0,1\n")
     assert sweep.main(["run", "--dry-run", "--table", str(steps)]) == 1
+
+def test_short_spread_check_without_tuning(capsys):
+    assert sweep.main(["check", "--dry-run", "--mode", "spread",
+                       "--rpm", "200", "--seconds", "0"]) == 0
+    output = capsys.readouterr().out
+    assert "StealthChop initial tuning" not in output
+
+
+def test_short_stealth_check_opt_out_of_tuning(capsys):
+    assert sweep.main(["check", "--dry-run", "--mode", "stealth",
+                       "--no-tune", "--rpm", "200", "--seconds", "0"]) == 0
+    output = capsys.readouterr().out
+    assert "StealthChop initial tuning" not in output
