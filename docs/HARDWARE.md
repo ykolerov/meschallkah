@@ -1,63 +1,40 @@
-# D1: компоненты и механическая сборка
+# Hardware: baseline design versus current assembly
 
-Источник требований: D1_build_instructions.pdf, v1.0 от 13.10.2026, разделы 2, 4–6. **Комплектующие оставлены исходными**, более дорогие моторы и контроллеры не подменяют оригинальный выбор. Цены в оригинале ориентировочные, а не текущие предложения.
+The reference specification is **D1_build_instructions.pdf v1.0 (13 Oct 2026)** for IYPT 2027 Problem 10 “Air vortex”. The table distinguishes that *design* from the actual equipment described and partially tested on 22 Oct 2026.
 
-## Требования привода
+| Component | Original specification | Current prototype |
+|---|---|---|
+| Motor | NEMA17 17HS4401, 200 steps/rev, 1.5 A, 1.5 Ω, 2.8 mH | **StepperOnline 17HE15-1504S**, 1.5 A, 200 steps/rev, ~2.3 Ω, ~4 mH (nominal product specifications; verify motor label and coil resistance) |
+| Driver | BIGTREETECH TMC2209 V1.3 | **Same** |
+| USB–UART | CP2102, 3.3 V | **FTDI FT232**, 3.3 V selected; CP2102 remains software-compatible |
+| Motor supply | 24 V ≥2 A enclosed supply | Laboratory DC supply → **LM2596S-ADJ buck module** → VM; voltage under new wiring **not yet documented by measurement** |
+| Logic supply | 3.3 V from USB adapter | 3.3 V from FT232 VCC |
+| Supply capacitor | 100 µF ≥35 V, close to VM/GND | Electrolytic + ceramic decoupling planned/soldered; exact values and verification still to be recorded |
+| TX resistor | 1 kΩ | Intended 1 kΩ TX-to-PDN_UART connection |
+| Enable | Latching SPDT GND/VIO | **Momentary pushbutton EN→GND, 10 kΩ pullup to 3.3 V** |
+| Camera sync LED | LED + 330 Ω via RTS | Intended LED + **100 Ω** via FT232 RTS; functional verification pending |
+| USB isolation | Not in original BOM | ADuM USB isolator on hand, actual model/power separation unverified |
 
-| Параметр | ТЗ |
+**Measured on the earlier working wiring:** COM4 returned TMC2209 version `0x21`, IRUN 0.7955 A RMS, no driver error/thermal fault, motor rotated. Laboratory supply was reported at **17 V, ~100–150 mA input** during one set of no-load tests. Input current is not motor winding RMS current.
+
+### Tachometer observations (earlier test setup)
+
+| Setpoint | Laser tachometer DT2234C Plus |
 |---|---|
-| Рабочая скорость | 50–2000 об/мин |
-| Разрешение задания | ≤1 об/мин |
-| Стабильность за 10 с | ≤0,5% (проверяется измерением) |
-| Момент на 1500 об/мин | >8 мН·м с запасом (оценка, не замер) |
-| Вибрации | Не должны заметно возмущать поверхность жидкости |
-| Управление | ПК + Python, таблица скоростей, лог |
-| Бюджет мотора и управления | ≤€150 |
+| 200 rpm | 201.3 rpm |
+| 500 rpm | 503 rpm |
+| 1000 rpm | 1005–1006 rpm |
 
-**Не путать разрешение команды VACTUAL с доказанной стабильностью реальной скорости двигателя.**
+These imply approximately **+0.5–0.65%**, consistent with clock scaling error; tachometer accuracy, sampling, thermal drift and repeatability remain unverified. An approximate fitted calibration from these *reported* values should not be represented as a certified calibration for the newly soldered board. Re-measure at operating voltage and temperature.
 
-## BOM, базовый
+### Mechanical design still to build
 
-| Что | Кол-во | Точное исполнение |
-|---|---:|---|
-| Шаговый двигатель | 1 | NEMA17 17HS4401, 1,8° (200 полных шагов/оборот), 1,5 A, 1,5 Ω, 2,8 мГн, 40 Н·см (паспортная оценка удержания) |
-| Драйвер | 1 | BIGTREETECH TMC2209 v1.3, с радиатором; Rsense **0,110 Ω** |
-| USB–UART | 1 | Имеющийся красный CP2102, контакты 3V3/TXD/RXD/GND/+5V; 3,3-вольтовая логика |
-| Питание | 1 | Готовый закрытый блок DC 24 В / ≥2 A, без самостоятельной разводки сетевых 230 В |
-| Конденсатор | 1 | 100 мкФ / ≥35 В, электролитический, непосредственно рядом с VM/GND |
-| Резистор | 1 | 1 кΩ, в линии TXD адаптера |
-| Выключатель | 1 | SPDT: физическая коммутация EN к GND (RUN) либо VIO (OFF) |
-| Монтаж | по месту | Перфоплата, провода, клеммы, термоусадка, держатели |
-| Магниты | 2 | NdFeB 20×10×5 мм, намагниченность по 5-мм оси; один N вверх, второй S вверх |
-| Диск | 1 | PETG, Ø60 мм, высота 8 мм, карманы под магниты; втулка под вал 5 мм D с винтом M3 или металлическая фланцевая муфта |
-| Крепёж мотора | 1 | Кронштейн NEMA17 и упругий вибродемпфер |
-| Платформа сосуда | 1 | Акрил 3 мм, ориентир 200×200 мм |
-| Стойки | 4 | Шпильки M6, ~16 гаек, ~8 резиновых шайб |
-| Основание | 1 | МДФ/фанера 18 мм, ориентир 300×300 мм, 4 резиновые ножки |
-| Дополнительная защита | 1 | Кожух/ограждение вокруг вращающегося диска; механическая фиксация магнитов |
+PETG disc Ø60 × 8 mm, 5 mm D shaft hub and M3 set screw or flange coupler; two NdFeB blocks 20 × 10 × 5 mm of opposite polarity; magnet center spacing initially 0.8× stir-bar length (32 mm for 40 mm bar). Magnet retention **must be mechanical**, not adhesive alone. Add a guard around the rotor before high-speed tests.
 
-Опционально: светодиод и резистор 330 Ω, если вывести RTS или DTR CP2102.
+Motor mount on vibration damping, separate ~200×200×3 mm acrylic vessel support on four M6 rods with rubber washers, ~300×300×18 mm plywood/MDF base, 4 rubber feet. Nominal magnet-to-bar gap 6–8 mm **not yet validated**.
 
-Инструменты: мультиметр, паяльник, 3D-принтер, штангенциркуль, уровень, термометр, смартфон с 240 fps, лазерная указка для T8.
+### Acceptance criteria (still unverified)
 
-## Механический пакет
+Original target: 50–2000 rpm, ≤1 rpm command increments, ≤0.5% short-term stability, >8 mN·m at 1500 rpm and negligible surface vibration. None is fully established by the current no-load measurements. See [commissioning](COMMISSIONING.md).
 
-Снизу вверх:
-
-1. Основание и демпфированный кронштейн NEMA17. Вал **вверх**.
-2. PETG-диск Ø60×8 мм на валу 5 мм, расстояние от **нижней** стороны диска до торца мотора ≥10 мм.
-3. Два магнита с противоположными полюсами вверх. Начальное расстояние между центрами **s≈0,8×Lbar**, то есть 32 мм для стержня 40 мм. Это гипотеза; уточнить T7.
-4. Независимая платформа на четырёх M6-стойках через шайбы/демпферы. Между диском и нижней стороной платформы ≈1–2 мм.
-5. Стакан с магнитным стержнем. Суммарное расстояние магнит–стержень по вертикали примерно **6–8 мм**: воздух + 3 мм акрил + 1,5–2,5 мм дно стакана. Подтвердить T7.
-
-В исходной установке S1 акриловая платформа также является дном внешней квадратной водяной рубашки; её стенки приклеиваются к платформе. Центр сосуда должен совпадать с осью вала. Основание мотора и платформа закреплены независимо для снижения переноса вибрации.
-
-Сделать контрастную чёрно-белую маркировку на периферии диска (половина белая / половина чёрная) для видео-тахометра. **Отдельно проверить балансировку**: симметричные карманы ещё не гарантируют отсутствие биения.
-
-## Обязательная механическая защита
-
-В исходном PDF предложена эпоксидная фиксация магнитов. Для диска на 2000–2500 об/мин **этого недостаточно считать доказанной безопасностью**. Использовать геометрические фиксаторы, накладку/пленку удержания и прозрачный кожух с исключением траектории вылета магнита. Не располагаться в плоскости вращения при первом пуске. При повышении скорости осматривать биение и нагрев.
-
-Первый пуск — без сосуда и воды, на малых оборотах, с кожухом и готовым выключателем EN. До замеров завершить T1–T9. Стойки и конструкция не должны позволять коснуться вращающегося диска при настройке.
-
-Результаты проверки механики, балансировки, температуры и сцепления фиксировать в журнале эксперимента.
+**Do not run the drive unattended.** A stalled or disconnected USB link does not automatically remove TMC2209 motor power. Keep motor supply current limited and an accessible hardware OFF.
