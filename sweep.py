@@ -69,7 +69,7 @@ def cmd_check(args):
         print("configuration:", configure(driver, args))
         print("status:", critical_check(driver))
         if args.rpm:
-            if args.mode == "stealth":
+            if args.mode == "stealth" and not args.no_tune:
                 print("StealthChop initial tuning: 0.5s stationary + 30s at 120 rpm")
                 driver.tune_stealthchop(sleep=sleep)
             driver.ramp_to(args.rpm, accel=args.accel, sleep=sleep)
@@ -279,6 +279,7 @@ def main(argv=None):
     drive_options(p)
     p.add_argument("--rpm", type=float, default=0.0)
     p.add_argument("--seconds", type=float, default=10.0)
+    p.add_argument("--no-tune", action="store_true", help="skip 30 s StealthChop tuning (diagnostics only)")
     p.set_defaults(func=cmd_check)
 
     p = sub.add_parser("run", help="run an rpm,wait_s,record_s CSV schedule")
